@@ -1,13 +1,13 @@
-class Stack {
+class Stack { //first in, last out
     constructor() {
         this.stack = [];
     }
 
-    push(element) {
+    push(element) {//mettre dans la pile
         this.stack.push(element);
     }
 
-    pop() {
+    pop() { //sort de la pile
         return this.stack.pop();
     }
 
@@ -16,7 +16,7 @@ class Stack {
     }
 
     isEmpty() {
-        return this.stack.length === 0;
+        return this.stack.length === 0; //3 égals = booléens
     }
 }
 

@@ -8,6 +8,74 @@ const stage = new Konva.Stage({
     height: 400,
 });
 
+
+// ============================== UNDO-REDO ==============================================
+class UndoManager {
+    constructor() {
+        this.undoStack = new Stack();
+        this.redoStack = new Stack();
+    }
+
+    execute(Command) {
+        Command.execute();
+        this.undoStack.push(Command);
+        this.updateUndoRedoButtons();
+    }
+
+    canUndo() {
+        return !this.undoStack.isEmpty();
+    }
+
+    canRedo() {
+        return !this.redoStack.isEmpty();
+    }
+        
+    undo() {
+        if (this.canUndo()) {
+            const command = this.undoStack.pop();
+            command.undo();
+            this.redoStack.push(command);
+            this.updateUndoRedoButtons()
+        }
+    }
+    redo() {
+        if (this.canRedo()) {
+            const command = this.redoStack.pop();
+            command.execute();
+            this.undoStack.push(command);
+            this.updateUndoRedoButtons()
+        }
+    }
+    updateUndoRedoButtons() {
+        undoButton.disabled = !this.canUndo();
+        redoButton.disabled = !this.canRedo();
+    }
+}
+
+
+class Command {
+    execute(){};
+    undo(){};
+}
+
+class AddPolylineCommand extends Command{ //Concrete Command
+
+    constructor(polyline, layer) {
+        super();
+        this.myLayer = layer; //receiver
+        this.myPolyline = polyline; //parameter
+    }
+    execute() {
+        this.myLayer.add(this.myPolyline);
+    }
+
+    undo() {
+        this.myPolyline.remove();
+    }
+}
+
+const undoManager = new UndoManager();
+
 // Une couche pour le dessin
 const dessin = new Konva.Layer();
 // Une couche pour la polyline en cours de construction
@@ -119,7 +187,10 @@ const polylineMachine = createMachine(
                 polyline.points(newPoints);
                 polyline.stroke("black"); // On change la couleur
                 // On sauvegarde la polyline dans la couche de dessin
-                dessin.add(polyline); // On l'ajoute à la couche de dessin
+                //dessin.add(polyline); // On l'ajoute à la couche de dessin
+                let command = new AddPolylineCommand(polyline,dessin); //let pour créer l'objet typage faible
+                //command.execute();
+                undoManager.execute(command);
             },
             addPoint: (context, event) => {
                 const pos = stage.getPointerPosition();
@@ -175,5 +246,14 @@ window.addEventListener("keydown", (event) => {
 // bouton Undo
 const undoButton = document.getElementById("undo");
 undoButton.addEventListener("click", () => {
-    
+    undoManager.undo();
+    console.log("undo")
 });
+
+// bouton Redo
+const redoButton = document.getElementById("redo");
+redoButton.addEventListener("click", () => {
+    undoManager.redo();
+    console.log("redo")
+});
+
